@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from omegaconf import OmegaConf
+import argparse
 
 # 1. キャリブレーションデータの読み込み
 def load_calibration_data(yaml_file_path):
@@ -107,16 +108,22 @@ def transform_bbox_with_homography(H, bbox):
 
 # 5. プロセス全体の実行例
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Transform bounding box using homography.")
+    parser.add_argument("--rgb_image", required=True, help="Path to the RGB image.")
+    parser.add_argument("--event_image", required=True, help="Path to the Event image.")
+    parser.add_argument("--calibration_file", required=True, help="Path to the calibration file (YAML).")
+
+    args = parser.parse_args()
+
     # キャリブレーションデータのロード
-    calibration_file = "calibration.yaml"  # YAMLファイルのパス
-    calibration_data = initialize_calibration(calibration_file)
+    calibration_data = initialize_calibration(args.calibration_file)
 
     # RGBカメラ画像とイベントカメラ画像の読み込み
-    rgb_image_path = "data/20250102_193237_523229/images/camera_1/camera_1_20250102_193237_549532.jpg"  # RGBカメラ画像のパス
-    event_image_path = "data/output_38151.png"  # イベントカメラ画像のパス
+    rgb_image = cv2.imread(args.rgb_image)
+    event_image = cv2.imread(args.event_image)
 
-    rgb_image = cv2.imread(rgb_image_path)
-    event_image = cv2.imread(event_image_path)
+    if rgb_image is None or event_image is None:
+        raise FileNotFoundError("One or both of the input images could not be loaded.")
 
     # 対応点の手動選択 (両画像を並べて選択)
     src_points, dst_points = select_points_dual_view(rgb_image.copy(), event_image.copy())
